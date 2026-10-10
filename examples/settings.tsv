@@ -1,0 +1,5 @@
+# Each non-comment line is one operation; key/value fields are hex bytes.
+# This whole file is committed with one WAL record and one durable flush.
+put	76657273696f6e	302e33
+put	656e61626c6564	74727565
+delete	6f62736f6c657465
