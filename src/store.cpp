@@ -91,7 +91,8 @@ class File {
 #endif
   }
 
-  void read(std::uint64_t offset, std::span<std::uint8_t> bytes) const {
+  template <typename Buffer>
+  void read(std::uint64_t offset, Buffer&& bytes) const {
     std::size_t done = 0;
     while (done < bytes.size()) {
 #ifdef _WIN32
