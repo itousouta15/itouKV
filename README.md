@@ -68,6 +68,37 @@ db.write(batch); // 整批一筆 WAL、一個 commit 序號、一次 durable flu
 計算 commit 數，不是 batch 內的操作數。完整契約、CLI TSV 格式與 WAL v2 見
 [docs/WRITE_BATCH.md](docs/WRITE_BATCH.md)。
 
+### 範例：離線筆記 CLI
+
+`itoukv_notes` 是獨立的範例執行檔，使用 `Store` 儲存筆記、以 `WriteBatch`
+原子更新筆記與標籤索引，不影響通用的 `itoukv` CLI。Windows 路徑如下；Linux
+單組態建置時將 `build/Release/` 改為 `build/`。
+
+```powershell
+"First note" | .\build\Release\itoukv_notes.exe .\notes.db add intro "我的筆記" - work
+.\build\Release\itoukv_notes.exe .\notes.db show intro
+.\build\Release\itoukv_notes.exe .\notes.db list work
+.\build\Release\itoukv_notes.exe .\notes.db edit intro "更新標題" .\note.txt personal
+.\build\Release\itoukv_notes.exe .\notes.db export .\notes.tsv
+.\build\Release\itoukv_notes.exe .\notes-copy.db import .\notes.tsv
+.\build\Release\itoukv_notes.exe .\notes.db delete intro
+.\build\Release\itoukv_notes.exe .\notes.db compact
+```
+
+介面為 `itoukv_notes <資料庫目錄> <命令> ...`：`add/edit <id> <title> <file|-> [tag ...]`、
+`show <id>`、`list [tag]`、`delete <id>`、`export/import <file>` 和 `compact`。
+`-` 可從 stdin 讀取內文；`edit` 的標籤清單會取代原有標籤。ID／標籤只接受
+1～80 個 ASCII 英數字、`_` 或 `-`；標題最多 4 KiB，內文可以包含換行及
+任意位元組，完整筆記仍受 16 MiB value 上限限制。`show` 先輸出標題和標籤，
+再原樣輸出內文；`list` 以 ID 排序、每行顯示 ID、標題與標籤。每個命令都會
+重新開啟資料庫，找不到筆記時 exit code 為 2。
+
+匯出檔是 `ITOUKV_NOTES_V1` 標頭加上逐行
+`id<TAB>title_hex<TAB>body_hex<TAB>comma-separated-tags`；hex 可無損保存
+換行、NUL 或非 UTF-8 內文。匯入會先驗證整份檔案並拒絕重複／已存在的 ID，
+然後依 `WriteBatch` 上限分批提交；**每批原子提交，但整份匯入不是單一交易**。
+匯入只接受檔案路徑，以便在寫入前完成驗證。請勿在匯入期間改動該檔案。
+
 ## 持久化契約
 
 每個 commit（單筆或整批）依序執行：

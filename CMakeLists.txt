@@ -27,6 +27,9 @@ add_executable(itoukv_cli src/cli.cpp)
 target_link_libraries(itoukv_cli PRIVATE itoukv)
 set_target_properties(itoukv_cli PROPERTIES OUTPUT_NAME itoukv)
 
+add_executable(itoukv_notes examples/notes.cpp)
+target_link_libraries(itoukv_notes PRIVATE itoukv)
+
 include(CTest)
 if(BUILD_TESTING)
   add_executable(itoukv_tests tests/storage_test.cpp)
@@ -38,6 +41,10 @@ if(BUILD_TESTING)
       COMMAND ${NODE_EXECUTABLE} --test ${CMAKE_CURRENT_SOURCE_DIR}/tests/process.test.mjs)
     set_tests_properties(process_recovery PROPERTIES ENVIRONMENT
       "ITOUKV_CLI=$<TARGET_FILE:itoukv_cli>;ITOUKV_TEST_HELPER=$<TARGET_FILE:itoukv_tests>")
+    add_test(NAME notes_cli
+      COMMAND ${NODE_EXECUTABLE} --test ${CMAKE_CURRENT_SOURCE_DIR}/tests/notes.test.mjs)
+    set_tests_properties(notes_cli PROPERTIES ENVIRONMENT
+      "ITOUKV_NOTES=$<TARGET_FILE:itoukv_notes>")
   endif()
 endif()
 
